@@ -59,9 +59,8 @@ export default function AnonymousChatPage() {
     if (typeof window !== 'undefined') {
       const isProduction = window.location.port === '8080'
       if (isProduction) {
-        // In Railway, the browser can't reach container localhost.
-        // Use the reverse-proxy path the platform/Caddy provides to forward WS to port 3004
-        chatServiceUrl = '/?XTransformPort=3004'
+        // In Railway, use the current origin with the proxy port transform
+        chatServiceUrl = `${window.location.origin}/?XTransformPort=3004`
       } else {
         // In dev, use the configured hostname:3004
         chatServiceUrl = `http://${window.location.hostname}:3004`
@@ -84,12 +83,16 @@ export default function AnonymousChatPage() {
 
     socketInstance.on('connect', () => {
       setIsConnected(true)
-      console.log('Connected to chat server')
+      console.log('✓ Connected to chat server at:', chatServiceUrl)
     })
 
     socketInstance.on('disconnect', () => {
       setIsConnected(false)
-      console.log('Disconnected from chat server')
+      console.log('✗ Disconnected from chat server')
+    })
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket.io connection error:', error)
     })
 
     socketInstance.on('online-count', (data: OnlineCount) => {
