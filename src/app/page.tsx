@@ -59,8 +59,9 @@ export default function AnonymousChatPage() {
     if (typeof window !== 'undefined') {
       const isProduction = window.location.port === '8080'
       if (isProduction) {
-        // In Railway, connect via localhost:3004 (both on same container)
-        chatServiceUrl = 'http://127.0.0.1:3004'
+        // In Railway, the browser can't reach container localhost.
+        // Use the reverse-proxy path the platform/Caddy provides to forward WS to port 3004
+        chatServiceUrl = '/?XTransformPort=3004'
       } else {
         // In dev, use the configured hostname:3004
         chatServiceUrl = `http://${window.location.hostname}:3004`
@@ -68,7 +69,8 @@ export default function AnonymousChatPage() {
     } else {
       chatServiceUrl = 'http://localhost:3004'
     }
-    
+
+    // Use relative path or proxied path in production so the browser connects via the exposed domain
     const socketInstance = io(chatServiceUrl, {
       transports: ['websocket', 'polling'],
       forceNew: true,
