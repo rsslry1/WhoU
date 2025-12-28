@@ -8,7 +8,7 @@
     "start": "bun run start:services",
     "start:chat": "cd mini-services/chat-service && bun run dev",
     "start:web": "next start",
-    "start:services": "bun x concurrently --kill-others \"bun run start:chat\" \"bun run start:web\"",
+    "start:services": "concurrently --kill-others \"bun run start:chat\" \"bun run start:web\"",
     "lint": "next lint",
     "postinstall": "prisma generate && bun run install-chat-service",
     "install-chat-service": "cd mini-services/chat-service && bun install && cd ../..",
