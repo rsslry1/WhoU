@@ -72,6 +72,7 @@ export default function AnonymousChatPage() {
 
     // Use relative path or proxied path in production so the browser connects via the exposed domain
     const socketInstance = io(chatServiceUrl, {
+      path: '/socket.io/',
       transports: ['websocket', 'polling'],
       forceNew: true,
       reconnection: true,
