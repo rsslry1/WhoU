@@ -52,7 +52,13 @@ export default function AnonymousChatPage() {
 
   useEffect(() => {
     // Initialize socket connection
-    const socketInstance = io(`http://${window.location.hostname}:3004`, {
+    // In Railway/production, use localhost since both services run on same container
+    // In dev, connect to localhost:3004
+    const chatServiceUrl = typeof window !== 'undefined' && window.location.port === '8080'
+      ? 'http://localhost:3004' // Production (Railway)
+      : `http://${window.location.hostname}:3004` // Development
+    
+    const socketInstance = io(chatServiceUrl, {
       transports: ['websocket', 'polling'],
       forceNew: true,
       reconnection: true,
