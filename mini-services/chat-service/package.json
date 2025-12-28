@@ -1,0 +1,16 @@
+{
+  "name": "anon-chat-service",
+  "version": "1.0.0",
+  "description": "Anonymous chat service using Socket.io",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  }
+}
