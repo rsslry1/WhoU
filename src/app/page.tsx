@@ -57,10 +57,11 @@ export default function AnonymousChatPage() {
     let chatServiceUrl: string
     
     if (typeof window !== 'undefined') {
-      const isProduction = window.location.port === '8080'
+      const isProduction = window.location.port === '8080' || window.location.hostname.includes('railway')
       if (isProduction) {
-        // In Railway, use the current origin with the proxy port transform
-        chatServiceUrl = `${window.location.origin}/?XTransformPort=3004`
+        // In Railway/production, use relative path with proxy query param
+        // Socket.io will automatically upgrade to WSS when on HTTPS
+        chatServiceUrl = '/?XTransformPort=3004'
       } else {
         // In dev, use the configured hostname:3004
         chatServiceUrl = `http://${window.location.hostname}:3004`
