@@ -9,7 +9,7 @@
     "start:chat": "cd mini-services/chat-service && bun run dev",
     "start:web": "next start",
     "start:proxy": "bun run proxy-server.ts",
-    "start:services": "concurrently \"bun run start:proxy\" \"bun run start:chat\" \"bun run start:web\"",
+    "start:services": "concurrently --success=first \"bun run start:proxy\" \"bun run start:chat\" \"bun run start:web\"",
     "lint": "next lint",
     "postinstall": "prisma generate && bun run install-chat-service",
     "install-chat-service": "cd mini-services/chat-service && bun install && cd ../..",

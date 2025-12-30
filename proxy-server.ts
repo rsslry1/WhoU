@@ -2,55 +2,69 @@ import { createServer } from 'http'
 import { IncomingMessage, ServerResponse } from 'http'
 import * as httpProxy from 'http-proxy'
 
-const proxy = httpProxy.createProxyServer({ 
+const chatProxy = httpProxy.createProxyServer({ 
   ws: true,
-  target: 'http://localhost:3004'
+  target: 'http://localhost:3004',
+  timeout: 5000
 })
 
-// Handle WebSocket upgrade events
-proxy.on('upgrade', (req, socket, head) => {
-  console.log(`[Proxy] Upgrading WebSocket: ${req.url}`)
+const nextProxy = httpProxy.createProxyServer({
+  ws: true,
+  target: 'http://localhost:3000',
+  timeout: 5000
+})
+
+// Error handlers
+chatProxy.on('error', (err, req, res) => {
+  console.error(`[Chat Proxy Error]:`, err.message)
+  res.writeHead(502, { 'Content-Type': 'text/plain' })
+  res.end(`Bad Gateway: Chat service error - ${err.message}`)
+})
+
+nextProxy.on('error', (err, req, res) => {
+  console.error(`[Next.js Proxy Error]:`, err.message)
+  res.writeHead(502, { 'Content-Type': 'text/plain' })
+  res.end(`Bad Gateway: Next.js service error - ${err.message}`)
 })
 
 const server = createServer((req: IncomingMessage, res: ServerResponse) => {
   const url = req.url || '/'
 
-  // Route based on XTransformPort query parameter
-  if (url.includes('XTransformPort=3004')) {
-    console.log(`[Proxy] Routing to chat service: ${url}`)
-    proxy.web(req, res, { target: 'http://localhost:3004' }, (err) => {
-      console.error(`[Proxy] Error routing to chat service:`, err)
-      res.writeHead(502, { 'Content-Type': 'text/plain' })
-      res.end('Bad Gateway: Chat service unavailable')
-    })
+  // Route Socket.io traffic to chat service
+  if (url.includes('XTransformPort=3004') || url.includes('socket.io')) {
+    console.log(`[Proxy] → Chat (3004): ${req.method} ${url}`)
+    chatProxy.web(req, res)
   } else {
-    // Route all other requests to Next.js
-    console.log(`[Proxy] Routing to Next.js: ${url}`)
-    httpProxy.createProxyServer({ ws: true }).web(req, res, { target: 'http://localhost:3000' }, (err) => {
-      console.error(`[Proxy] Error routing to Next.js:`, err)
-      res.writeHead(502, { 'Content-Type': 'text/plain' })
-      res.end('Bad Gateway: Next.js service unavailable')
-    })
+    // Route everything else to Next.js
+    console.log(`[Proxy] → Next.js (3000): ${req.method} ${url}`)
+    nextProxy.web(req, res)
   }
 })
 
+// Handle WebSocket upgrades
 server.on('upgrade', (req, socket, head) => {
   const url = req.url || '/'
   
-  if (url.includes('XTransformPort=3004')) {
-    console.log(`[Proxy] WebSocket upgrade to chat service: ${url}`)
-    proxy.ws(req, socket, head, { target: 'http://localhost:3004' })
+  if (url.includes('XTransformPort=3004') || url.includes('socket.io')) {
+    console.log(`[Proxy] WebSocket upgrade → Chat (3004): ${url}`)
+    chatProxy.ws(req, socket, head)
   } else {
-    console.log(`[Proxy] WebSocket upgrade to Next.js: ${url}`)
-    const nextProxy = httpProxy.createProxyServer({ ws: true })
-    nextProxy.ws(req, socket, head, { target: 'http://localhost:3000' })
+    console.log(`[Proxy] WebSocket upgrade → Next.js (3000): ${url}`)
+    nextProxy.ws(req, socket, head)
   }
 })
 
 const PORT = process.env.PORT || 8080
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Proxy] Reverse proxy server running on port ${PORT}`)
-  console.log(`[Proxy] Routing WebSocket XTransformPort=3004 → localhost:3004`)
-  console.log(`[Proxy] Routing all other requests → localhost:3000`)
+  console.log(`[Proxy] ✓ Reverse proxy listening on port ${PORT}`)
+  console.log(`[Proxy] Socket.io traffic (XTransformPort=3004) → localhost:3004`)
+  console.log(`[Proxy] All other traffic → localhost:3000`)
+  console.log(`[Proxy] Waiting for backend services to become available...`)
 })
+
+server.on('error', (err) => {
+  console.error(`[Proxy Server Error]:`, err)
+  process.exit(1)
+})
+
