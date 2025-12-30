@@ -7,7 +7,7 @@
     "build": "bun install-chat-service && next build",
     "start": "bun run start:services",
     "start:chat": "cd mini-services/chat-service && bun run dev",
-    "start:web": "next start -p 3000",
+    "start:web": "PORT=3000 next start",
     "start:proxy": "bun run proxy-server.ts",
     "start:services": "concurrently --names 'PROXY,CHAT,NEXT' \"bun run start:proxy\" \"sleep 2 && bun run start:chat\" \"sleep 4 && bun run start:web\"",
     "lint": "next lint",
