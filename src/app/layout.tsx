@@ -15,24 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "KinsaKaBoi - Anonymous Chat",
+  description: "Chat anonymously with strangers randomly. Modern anonymous chat application built with Next.js, TypeScript, and Tailwind CSS.",
+  keywords: ["KinsaKaBoi", "anonymous chat", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "React", "chat"],
+  authors: [{ name: "KinsaKaBoi Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.svg",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "KinsaKaBoi",
+    description: "Anonymous chat with strangers",
+    url: "https://kinsakaboi.com",
+    siteName: "KinsaKaBoi",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "KinsaKaBoi",
+    description: "Anonymous chat with strangers",
   },
 };
 
