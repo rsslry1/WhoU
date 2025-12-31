@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { MessageSquare, User, Users, LogOut, AlertTriangle, Send, Loader2, Shield, X, Forward } from 'lucide-react'
+import { MessageSquare, User, Users, LogOut, AlertTriangle, Send, Loader2, Shield, X, Forward, Info } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -42,7 +42,8 @@ export default function AnonymousChatPage() {
   const [reportReason, setReportReason] = useState('')
   const [connectionTimer, setConnectionTimer] = useState(0)
   const [inputMessage, setInputMessage] = useState('')
-
+  const [howToUseDialogOpen, setHowToUseDialogOpen] = useState(false) // controls info dialog
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectionTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -57,14 +58,20 @@ export default function AnonymousChatPage() {
     let chatServiceUrl: string
     
     if (typeof window !== 'undefined') {
-      const isProduction = window.location.port === '8080' || window.location.hostname.includes('railway')
+      const isProduction = window.location.port === '8080' || 
+                           window.location.hostname.includes('railway') ||
+                           (window.location.protocol === 'https:' && window.location.hostname.includes('trycloudflare.com'))
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      
       if (isProduction) {
-        // In Railway/production, use relative path with proxy query param
-        // Socket.io will automatically upgrade to WSS when on HTTPS
+        // Using proxy server on port 8080 (including through tunnel)
         chatServiceUrl = '/?XTransformPort=3004'
-      } else {
-        // In dev, use the configured hostname:3004
+      } else if (isLocalDev) {
+        // Local development
         chatServiceUrl = `http://${window.location.hostname}:3004`
+      } else {
+        // Fallback for other scenarios
+        chatServiceUrl = window.location.origin
       }
     } else {
       chatServiceUrl = 'http://localhost:3004'
@@ -274,13 +281,13 @@ export default function AnonymousChatPage() {
   // Landing Page
   if (status === 'landing') {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background" style={{ position: 'relative' }}>
         {/* Header */}
         <header className="border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">AnonChat</h1>
+              <h1 className="text-xl font-bold">Kinsa Ka Boi?</h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -302,7 +309,104 @@ export default function AnonymousChatPage() {
         <main className="flex-1 flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-3xl font-bold">Chat Anonymously</CardTitle>
+              <div className="flex items-center justify-center gap-2">
+                <CardTitle className="text-3xl font-bold">Chat Anonymously</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    // Create a custom modal with animation
+                    const modal = document.createElement('div');
+                    const isDarkMode = document.documentElement.classList.contains('dark');
+                    modal.style.cssText = `
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      background: rgba(0, 0, 0, 0);
+                      z-index: 999999;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      padding: 20px;
+                      opacity: 0;
+                      transition: all 0.3s ease;
+                    `;
+                    
+                    const content = document.createElement('div');
+                    content.style.cssText = `
+                      background: ${isDarkMode ? '#1f2937' : 'white'};
+                      color: ${isDarkMode ? '#f3f4f6' : '#1f2937'};
+                      padding: 30px;
+                      border-radius: 12px;
+                      max-width: 400px;
+                      width: 90%;
+                      text-align: center;
+                      box-shadow: 0 20px 25px rgba(0, 0, 0, 0);
+                      transform: scale(0.9) translateY(20px);
+                      transition: all 0.3s ease;
+                    `;
+                    
+                    content.innerHTML = `
+                      <h2 style="margin: 0 0 20px 0; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'}; font-size: 20px;">How to Use Kinsa Ka Boi?</h2>
+                      <p style="margin: 0 0 20px 0; color: ${isDarkMode ? '#9ca3af' : '#6b7280'}; font-size: 14px;">Simple steps to start chatting anonymously:</p>
+                      <div style="text-align: left; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'};">1. Enter a username</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">Choose any temporary username</p>
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'};">2. Click "Start Chatting"</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">We'll match you with a stranger</p>
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'};">3. Start talking</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">Type messages and press Enter</p>
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'};">4. Use Action Buttons</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">Next, Report, or Stop</p>
+                      </div>
+                      <div style="background: ${isDarkMode ? '#374151' : '#f3f4f6'}; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: ${isDarkMode ? '#f3f4f6' : '#1f2937'}; font-size: 14px;">Tips:</p>
+                        <p style="margin: 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">• Be respectful and kind to others</p>
+                        <p style="margin: 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">• No personal data is stored</p>
+                        <p style="margin: 0; font-size: 13px; color: ${isDarkMode ? '#9ca3af' : '#6b7280'};">• Chat history deleted on disconnect</p>
+                      </div>
+                      <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: #3b82f6;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+                      " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Got it!</button>
+                    `;
+                    
+                    modal.appendChild(content);
+                    document.body.appendChild(modal);
+                    
+                    // Trigger animations
+                    requestAnimationFrame(() => {
+                      modal.style.background = 'rgba(0, 0, 0, 0.8)';
+                      modal.style.opacity = '1';
+                      content.style.transform = 'scale(1) translateY(0)';
+                      content.style.boxShadow = '0 20px 25px rgba(0, 0, 0, 0.15)';
+                    });
+                    
+                    modal.onclick = (e) => {
+                      if (e.target === modal) {
+                        modal.style.background = 'rgba(0, 0, 0, 0)';
+                        modal.style.opacity = '0';
+                        content.style.transform = 'scale(0.9) translateY(20px)';
+                        content.style.boxShadow = '0 20px 25px rgba(0, 0, 0, 0)';
+                        setTimeout(() => modal.remove(), 300);
+                      }
+                    };
+                  }}
+                  title="How to use"
+                >
+                  <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </Button>
+              </div>
               <p className="text-muted-foreground">Talk to strangers randomly and anonymously</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -350,13 +454,13 @@ export default function AnonymousChatPage() {
   // Matching Screen
   if (status === 'matching') {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background" style={{ position: 'relative' }}>
         {/* Header */}
         <header className="border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">AnonChat</h1>
+              <h1 className="text-xl font-bold">KinsaKaBoi</h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -407,7 +511,7 @@ export default function AnonymousChatPage() {
 
   // Chat Interface (Connected or Disconnected)
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background" style={{ position: 'relative' }}>
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -566,10 +670,38 @@ export default function AnonymousChatPage() {
 
       {/* Footer */}
       <footer className="border-t border-border bg-card/50 backdrop-blur-sm mt-auto">
-        <div className="container mx-auto px-4 py-3 text-center text-xs text-muted-foreground">
-          <p>No chat history is stored. Everything is deleted when you disconnect.</p>
+        <div className="container mx-auto px-4 py-4 text-center text-sm text-muted-foreground">
+          <p>Chat anonymously with strangers</p>
         </div>
       </footer>
+
+      {/* How to Use Dialog */}
+      {howToUseDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setHowToUseDialogOpen(false)}>
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg" onClick={(e)=>e.stopPropagation()}>
+            <div className="mb-4 flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">How to Use Kinsa Ka Boi?</h2>
+            </div>
+            <p className="mb-4 text-sm text-muted-foreground">Simple steps to start chatting anonymously:</p>
+            <ol className="mb-4 space-y-2 text-sm list-decimal list-inside">
+              <li><span className="font-medium">Enter a username</span> – choose any temporary name.</li>
+              <li><span className="font-medium">Click "Start Chatting"</span> – we'll match you with a stranger.</li>
+              <li><span className="font-medium">Start talking</span> – type and press Enter to send.</li>
+              <li><span className="font-medium">Use action buttons</span> – Next, Report, or Stop.</li>
+            </ol>
+            <div className="mb-4 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+              <p className="font-medium mb-1">💡 Tips:</p>
+              <ul className="space-y-1">
+                <li>• Be respectful and kind.</li>
+                <li>• No personal data is stored.</li>
+                <li>• Chat history is deleted on disconnect.</li>
+              </ul>
+            </div>
+            <button className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90" onClick={()=>setHowToUseDialogOpen(false)}>Got it! 👍</button>
+          </div>
+        </div>
+      )}
 
       {/* Report Dialog */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
@@ -601,6 +733,122 @@ export default function AnonymousChatPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Messages Area */}
+      <Card className="flex-1 flex flex-col min-h-[400px]">
+    <ScrollArea className="flex-1 p-4">
+      <div className="space-y-4">
+        {messages.map((message) => (
+          <motion.div
+            key={message.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+          >
+            {message.sender === 'system' ? (
+              <div className="w-full text-center">
+                <span className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full">
+                  {message.content}
+                </span>
+              </div>
+            ) : (
+              <div
+                className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                  message.sender === 'me'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-foreground'
+                }`}
+              >
+                <p className="text-sm">{message.content}</p>
+                <p className="text-xs opacity-70 mt-1">
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        ))}
+
+        {partnerTyping && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-start"
+          >
+            <div className="bg-muted rounded-lg px-4 py-2">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+    </ScrollArea>
+
+    {/* Input Area */}
+    <div className="border-t border-border p-4 space-y-3">
+      <div className="flex gap-2">
+        <Input
+          placeholder="Type a message..."
+          value={inputMessage}
+          onKeyPress={(e) => {
+            handleTyping((e.target as HTMLInputElement).value)
+            if (e.key === 'Enter') {
+              handleSendMessage()
+            }
+          }}
+          onChange={(e) => {
+            setInputMessage(e.target.value)
+            handleTyping(e.target.value)
+          }}
+          disabled={status !== 'connected'}
+        />
+        <Button
+          onClick={handleSendMessage}
+          disabled={status !== 'connected' || !inputMessage.trim()}
+          size="icon"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        <Button
+          onClick={handleNext}
+          variant="outline"
+          className="flex-1"
+        >
+          <Forward className="h-4 w-4 mr-2" />
+          Next
+        </Button>
+        <Button
+          onClick={() => setReportDialogOpen(true)}
+          variant="outline"
+          className="flex-1"
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          Report
+        </Button>
+        <Button
+          onClick={handleDisconnect}
+          variant="destructive"
+          className="flex-1"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Stop
+        </Button>
+      </div>
     </div>
+  </Card>
+</div>
+
   )
 }
